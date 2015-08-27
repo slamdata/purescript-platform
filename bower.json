@@ -1,0 +1,20 @@
+{
+  "name": "purescript-platform",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slamdata/purescript-platform"
+  },
+  "homepage": "https://github.com/slamdata/purescript-platform",
+  "authors": [
+    "Jon Sterling <jon@jonmsterling.com>"
+  ],
+  "description": "A PureScript interface to platform.js",
+  "keywords": [
+    "purescript",
+    "platform"
+  ],
+  "license": "Apache 2.0",
+  "dependencies": {
+    "purescript-base": "^0.1.0"
+  }
+}
