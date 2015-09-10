@@ -15,6 +15,7 @@
   ],
   "license": "Apache 2.0",
   "dependencies": {
-    "purescript-base": "^0.1.0"
+    "purescript-base": "^0.1.0",
+    "platform.js": "bestiejs/platform.js#^1.2.0"
   }
 }
