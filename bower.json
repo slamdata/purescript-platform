@@ -13,8 +13,14 @@
     "purescript",
     "platform"
   ],
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "dependencies": {
-    "purescript-base": "^0.1.0"
+    "purescript-base": "^0.1.0",
+    "purescript-enums": "^0.7.0",
+    "purescript-prelude": "^0.1.2"
+  },
+  "resolutions": {
+    "purescript-enums": "^0.7.0",
+    "purescript-strings": "^0.7.0"
   }
 }
