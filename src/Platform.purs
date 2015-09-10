@@ -21,6 +21,7 @@ type PlatformInfo =
   , prerelease :: String
   , product :: String
   , ua :: String
+  , os :: String
   , version :: String
   }
 
