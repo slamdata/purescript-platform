@@ -9,5 +9,4 @@ import qualified Platform as P
 main :: Eff (platform :: P.PLATFORM, console :: CONSOLE) Unit
 main = do
   platform <- P.getPlatform
-  log $ show platform
-  pure unit
+  maybe (log "Error") (log <<< show) platform
