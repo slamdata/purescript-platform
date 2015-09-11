@@ -1,12 +1,14 @@
 {
   "name": "purescript-platform",
   "description": "A PureScript interface to platform.js.",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/slamdata/purescript-platform.git"
   },
   "author": "Jon Sterling <jon@jonmsterling.com>",
   "scripts": {
+    "build": "npm install && gulp bundle-test",
     "example": "npm install && gulp bundle-test && open test/index.html"
   },
   "devDependencies": {
