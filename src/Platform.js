@@ -2,18 +2,10 @@
 
 var platform = require("platform");
 
-exports.parse = function(str) {
+exports.parse_ = function(str) {
   return platform.parse(str);
 };
 
-exports.getPlatform = function() {
+exports.getPlatform_ = function() {
   return platform;
-};
-
-exports.platformInfo = function(p) {
-  return p;
-};
-
-exports._toString = function(p) {
-  return p.toString();
 };
