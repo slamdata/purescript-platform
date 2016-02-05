@@ -33,23 +33,23 @@ instance isForeignOs :: IsForeign Os where
   read f = do
     r <- { architecture: _
          , family: _
-         , version: _} 
+         , version: _}
          <$> readMaybeNull "architecture" f
-         <*> readMaybeNull "family" f 
+         <*> readMaybeNull "family" f
          <*> readMaybeNull "version" f
     pure $ Os r
 
 instance showOs :: Show Os where
   show (Os r) = "(Os \n"
-                <> "{ architecture = " <> show r.architecture <> ",\n" 
-                <> "  family = " <> show r.family <> ",\n" 
+                <> "{ architecture = " <> show r.architecture <> ",\n"
+                <> "  family = " <> show r.family <> ",\n"
                 <> "  version = " <> show r.version <> "})"
 
 instance eqOs :: Eq Os where
   eq (Os r1) (Os r2) = r1.architecture == r2.architecture
                        && r1.family == r2.family
-                       && r1.version == r2.version 
-    
+                       && r1.version == r2.version
+
 data Prerelease = Alpha | Beta
 
 instance showPrerelease :: Show Prerelease where
@@ -59,7 +59,7 @@ instance showPrerelease :: Show Prerelease where
 instance eqPrerelease :: Eq Prerelease where
   eq Alpha Alpha = true
   eq Beta Beta = true
-  eq _ _  = false 
+  eq _ _  = false
 
 instance isForeignPrerelease :: IsForeign Prerelease where
   read f = do
@@ -78,7 +78,7 @@ type PlatformRec = { description :: Maybe String
                    , ua :: Maybe String
                    , version :: Maybe String
                    , os :: Os
-                   } 
+                   }
 newtype Platform = Platform PlatformRec
 runPlatform :: Platform -> PlatformRec
 runPlatform (Platform r) = r
@@ -123,9 +123,9 @@ readMaybeNull key f = map runNull $ readProp key f
 
 foreign import getPlatform_ :: forall e. Eff (platform :: PLATFORM|e) Foreign
 
-getPlatform :: forall m e. (Monad m, MonadEff (platform :: PLATFORM|e) m) => 
-               m (Maybe Platform) 
-getPlatform = do 
+getPlatform :: forall m e. (Monad m, MonadEff (platform :: PLATFORM|e) m) =>
+               m (Maybe Platform)
+getPlatform = do
   f <- liftEff getPlatform_
   pure case read f of
     Left _ -> Nothing
