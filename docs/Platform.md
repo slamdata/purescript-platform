@@ -21,9 +21,9 @@ newtype Os
 
 ##### Instances
 ``` purescript
-instance isForeignOs :: IsForeign Os
-instance showOs :: Show Os
-instance eqOs :: Eq Os
+IsForeign Os
+Show Os
+Eq Os
 ```
 
 #### `runOs`
@@ -42,9 +42,9 @@ data Prerelease
 
 ##### Instances
 ``` purescript
-instance showPrerelease :: Show Prerelease
-instance eqPrerelease :: Eq Prerelease
-instance isForeignPrerelease :: IsForeign Prerelease
+Show Prerelease
+Eq Prerelease
+IsForeign Prerelease
 ```
 
 #### `PlatformRec`
@@ -62,8 +62,8 @@ newtype Platform
 
 ##### Instances
 ``` purescript
-instance showPlatform :: Show Platform
-instance isForeignPlatform :: IsForeign Platform
+Show Platform
+IsForeign Platform
 ```
 
 #### `runPlatform`
