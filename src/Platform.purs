@@ -18,7 +18,7 @@ import Data.Either (either, Either(..))
 import Data.Foreign (readString, Foreign(), ForeignError(TypeMismatch), F())
 import Data.Foreign.Class (IsForeign, read, readProp)
 import Data.Foreign.Null (runNull)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 
 foreign import data PLATFORM :: !
 type OsRec =  { architecture :: Maybe Int
