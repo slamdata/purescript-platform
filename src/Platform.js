@@ -1,11 +1,11 @@
-// module Platform
+"use strict";
 
 var platform = require("platform");
 
-exports.parse_ = function(str) {
+exports.parse_ = function (str) {
   return platform.parse(str);
 };
 
-exports.getPlatform_ = function() {
+exports.getPlatform_ = function () {
   return platform;
 };
