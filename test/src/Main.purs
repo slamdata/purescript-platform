@@ -1,10 +1,10 @@
 module Test.Main where
 
 import Prelude
-import Control.Monad.Eff (Eff())
-import Control.Monad.Eff.Console (CONSOLE(), log)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Maybe (maybe)
-import qualified Platform as P
+import Platform as P
 
 main :: Eff (platform :: P.PLATFORM, console :: CONSOLE) Unit
 main = do
