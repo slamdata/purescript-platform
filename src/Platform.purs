@@ -1,12 +1,12 @@
 module Platform
   ( Platform(..)
-  , PLATFORM()
+  , PLATFORM
   , Os(..)
   , Prerelease(..)
-  , OsRec()
-  , PlatformRec()
-  , runPlatform
+  , OsRec
+  , PlatformRec
   , runOs
+  , runPlatform
   , getPlatform
   , parse
   ) where
@@ -14,26 +14,30 @@ module Platform
 import Prelude
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
+import Control.Monad.Except (runExcept, throwError)
+
 import Data.Either (either, Either(..))
+import Data.Foldable as F
 import Data.Foreign (readString, Foreign, ForeignError(TypeMismatch), F)
 import Data.Foreign.Class (class IsForeign, read, readProp)
 import Data.Foreign.Null (unNull)
 import Data.Maybe (Maybe(..))
+import Data.List.NonEmpty as NEL
 
-foreign import data PLATFORM :: !
+foreign import data PLATFORM ∷ !
 
 type OsRec =
-  { architecture :: Maybe Int
-  , family :: Maybe String
-  , version :: Maybe String
+  { architecture ∷ Maybe Int
+  , family ∷ Maybe String
+  , version ∷ Maybe String
   }
 
 newtype Os = Os OsRec
-
-runOs :: Os -> OsRec
+runOs ∷ Os → OsRec
 runOs (Os r) = r
 
-instance isForeignOs :: IsForeign Os where
+
+instance isForeignOs ∷ IsForeign Os where
   read f =
     map Os $
       { architecture: _
@@ -44,7 +48,7 @@ instance isForeignOs :: IsForeign Os where
       <*> readMaybeNull "family" f
       <*> readMaybeNull "version" f
 
-instance showOs :: Show Os where
+instance showOs ∷ Show Os where
   show (Os r) =
     "(Os \n"
       <> "{ architecture = " <> show r.architecture <> ",\n"
@@ -53,48 +57,47 @@ instance showOs :: Show Os where
 
 instance eqOs :: Eq Os where
   eq (Os r1) (Os r2) =
-    r1.architecture == r2.architecture
-      && r1.family == r2.family
-      && r1.version == r2.version
+    F.and
+      [ r1.architecture == r2.architecture
+      , r1.family == r2.family
+      , r1.version == r2.version
+      ]
 
 data Prerelease
   = Alpha
   | Beta
 
-instance showPrerelease :: Show Prerelease where
+derive instance eqPrerelease ∷ Eq Prerelease
+
+instance showPrerelease ∷ Show Prerelease where
   show Alpha = "Alpha"
   show Beta = "Beta"
 
-instance eqPrerelease :: Eq Prerelease where
-  eq Alpha Alpha = true
-  eq Beta Beta = true
-  eq _ _  = false
-
-instance isForeignPrerelease :: IsForeign Prerelease where
+instance isForeignPrerelease ∷ IsForeign Prerelease where
   read f =
     readString f >>= case _ of
-      "alpha" -> pure Alpha
-      "beta" -> pure Beta
-      _ -> Left $ TypeMismatch "prerelease" "string"
+      "alpha" → pure Alpha
+      "beta" → pure Beta
+      _ → throwError $ NEL.singleton $ TypeMismatch "prerelease" "string"
 
 type PlatformRec =
-  { description :: Maybe String
-  , layout :: Maybe String
-  , manufacturer :: Maybe String
-  , name :: Maybe String
-  , prerelease :: Maybe Prerelease
-  , product :: Maybe String
-  , ua :: Maybe String
-  , version :: Maybe String
-  , os :: Os
+  { description ∷ Maybe String
+  , layout ∷ Maybe String
+  , manufacturer ∷ Maybe String
+  , name ∷ Maybe String
+  , prerelease ∷ Maybe Prerelease
+  , product ∷ Maybe String
+  , ua ∷ Maybe String
+  , version ∷ Maybe String
+  , os ∷ Os
   }
 
 newtype Platform = Platform PlatformRec
 
-runPlatform :: Platform -> PlatformRec
+runPlatform ∷ Platform → PlatformRec
 runPlatform (Platform r) = r
 
-instance showPlatform :: Show Platform where
+instance showPlatform ∷ Show Platform where
   show (Platform r) =
     "(Platform \n"
       <> " {description = " <> show r.description <> ",\n"
@@ -107,7 +110,21 @@ instance showPlatform :: Show Platform where
       <> "  version = " <> show r.version <> ",\n"
       <> "  os = " <> show r.os <> "})"
 
-instance isForeignPlatform :: IsForeign Platform where
+instance eqPlatform ∷ Eq Platform where
+  eq (Platform r1) (Platform r2) =
+    F.and
+      [ r1.description == r2.description
+      , r1.layout == r2.layout
+      , r1.manufacturer == r2.manufacturer
+      , r1.name == r2.name
+      , r1.prerelease == r2.prerelease
+      , r1.product == r2.product
+      , r1.ua == r2.ua
+      , r1.version == r2.version
+      , r1.os == r2.os
+      ]
+
+instance isForeignPlatform ∷ IsForeign Platform where
   read f =
     map Platform $
       { description: _
@@ -130,22 +147,23 @@ instance isForeignPlatform :: IsForeign Platform where
       <*> readMaybeNull "version" f
       <*> readProp "os" f
 
-readMaybeNull :: forall a. (IsForeign a) => String -> Foreign -> F (Maybe a)
+readMaybeNull ∷ forall a. (IsForeign a) ⇒ String → Foreign → F (Maybe a)
 readMaybeNull key f = map unNull $ readProp key f
 
-foreign import getPlatform_ :: forall e. Eff (platform :: PLATFORM | e) Foreign
+foreign import getPlatform_ ∷ forall e. Eff (platform ∷ PLATFORM | e) Foreign
 
 getPlatform
-  :: forall m e
-   . (Monad m, MonadEff (platform :: PLATFORM | e) m)
-  => m (Maybe Platform)
+  ∷ forall m e
+  . (Monad m, MonadEff (platform ∷ PLATFORM | e) m)
+  ⇒ m (Maybe Platform)
 getPlatform = do
-  f <- liftEff getPlatform_
-  pure case read f of
-    Left _ -> Nothing
-    Right p -> Just p
+  f ← liftEff getPlatform_
+  pure $ case runExcept $ read f of
+    Left _ → Nothing
+    Right p → Just p
 
-foreign import parse_ :: String -> Foreign
 
-parse :: String -> Maybe Platform
-parse str = either (const Nothing) Just $ read $ parse_ str
+foreign import parse_ ∷ String → Foreign
+
+parse ∷ String → Maybe Platform
+parse str = either (const Nothing) Just $ runExcept $ read $ parse_ str
