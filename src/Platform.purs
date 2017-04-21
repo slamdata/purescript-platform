@@ -12,19 +12,19 @@ module Platform
   ) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
+import Control.Monad.Eff (kind Effect, Eff)
 import Control.Monad.Eff.Class (class MonadEff, liftEff)
 import Control.Monad.Except (runExcept, throwError)
 
 import Data.Either (either, Either(..))
 import Data.Foldable as F
-import Data.Foreign (readString, Foreign, ForeignError(TypeMismatch), F)
-import Data.Foreign.Class (class IsForeign, read, readProp)
-import Data.Foreign.Null (unNull)
+import Data.Traversable (traverse)
+import Data.Foreign (readString, readInt, Foreign, ForeignError(TypeMismatch), F, readNullOrUndefined)
+import Data.Foreign.Index((!))
 import Data.Maybe (Maybe(..))
 import Data.List.NonEmpty as NEL
 
-foreign import data PLATFORM ∷ !
+foreign import data PLATFORM ∷ Effect
 
 type OsRec =
   { architecture ∷ Maybe Int
@@ -36,17 +36,18 @@ newtype Os = Os OsRec
 runOs ∷ Os → OsRec
 runOs (Os r) = r
 
-
-instance isForeignOs ∷ IsForeign Os where
-  read f =
+readOs :: Foreign -> F Os
+readOs f =
     map Os $
       { architecture: _
       , family: _
       , version: _
       }
-      <$> readMaybeNull "architecture" f
-      <*> readMaybeNull "family" f
-      <*> readMaybeNull "version" f
+      <$> readI "architecture"
+      <*> readS "family"
+      <*> readS "version"
+  where readS key = f ! key >>= readNullOrUndefined >>= traverse readString
+        readI key = f ! key >>= readNullOrUndefined >>= traverse readInt
 
 instance showOs ∷ Show Os where
   show (Os r) =
@@ -73,8 +74,8 @@ instance showPrerelease ∷ Show Prerelease where
   show Alpha = "Alpha"
   show Beta = "Beta"
 
-instance isForeignPrerelease ∷ IsForeign Prerelease where
-  read f =
+readPrerelease :: Foreign -> F Prerelease
+readPrerelease f =
     readString f >>= case _ of
       "alpha" → pure Alpha
       "beta" → pure Beta
@@ -124,8 +125,8 @@ instance eqPlatform ∷ Eq Platform where
       , r1.os == r2.os
       ]
 
-instance isForeignPlatform ∷ IsForeign Platform where
-  read f =
+readPlatform :: Foreign -> F Platform
+readPlatform f =
     map Platform $
       { description: _
       , layout: _
@@ -137,28 +138,27 @@ instance isForeignPlatform ∷ IsForeign Platform where
       , version: _
       , os: _
       }
-      <$> readMaybeNull "description" f
-      <*> readMaybeNull "layout" f
-      <*> readMaybeNull "manufacturer" f
-      <*> readMaybeNull "name" f
-      <*> readMaybeNull "prerelease" f
-      <*> readMaybeNull "product" f
-      <*> readMaybeNull "ua" f
-      <*> readMaybeNull "version" f
-      <*> readProp "os" f
-
-readMaybeNull ∷ forall a. (IsForeign a) ⇒ String → Foreign → F (Maybe a)
-readMaybeNull key f = map unNull $ readProp key f
+      <$> readS "description"
+      <*> readS "layout"
+      <*> readS "manufacturer"
+      <*> readS "name"
+      <*> (f ! "prerelease" >>= readNullOrUndefined >>= traverse readPrerelease)
+      <*> readS "product"
+      <*> readS "ua"
+      <*> readS "version"
+      <*> (f ! "os" >>= readOs)
+  where readS key = f ! key >>= readNullOrUndefined >>= traverse readString
 
 foreign import getPlatform_ ∷ forall e. Eff (platform ∷ PLATFORM | e) Foreign
 
 getPlatform
   ∷ forall m e
-  . (Monad m, MonadEff (platform ∷ PLATFORM | e) m)
+  . Monad m
+  ⇒ MonadEff (platform ∷ PLATFORM | e) m
   ⇒ m (Maybe Platform)
 getPlatform = do
   f ← liftEff getPlatform_
-  pure $ case runExcept $ read f of
+  pure $ case runExcept $ readPlatform f of
     Left _ → Nothing
     Right p → Just p
 
@@ -166,4 +166,4 @@ getPlatform = do
 foreign import parse_ ∷ String → Foreign
 
 parse ∷ String → Maybe Platform
-parse str = either (const Nothing) Just $ runExcept $ read $ parse_ str
+parse str = either (const Nothing) Just $ runExcept $ readPlatform $ parse_ str
